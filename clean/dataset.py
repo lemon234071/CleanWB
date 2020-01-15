@@ -7,14 +7,9 @@ from clean.filter import BLACK_LIST, BLACK_STR
 
 def dataloader(dir_path):
     json_path_list = [dir_path + name for name in os.listdir(dir_path)]
-    txt_path_list = [dir_path + name for name in os.listdir(dir_path)]
-
     simple_loader = []
     for path in json_path_list:
         simple_loader.append((load_json, path))
-    for path in txt_path_list:
-        simple_loader.append((load_txt, path))
-
     return simple_loader
 
 
