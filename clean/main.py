@@ -200,7 +200,7 @@ def main_filter(simple_filter: Filter, loader, path, out_dir, dirty_dir, resp_on
     if len(output_single) > 0:
         save_json(output_single, out_path.replace("multi", "single"))
 
-    for file in []:
+    for file in ["other", "black", "name", "not_en", "generic", "confuse"]:
         temp_path = os.path.join(dirty_dir, file)
         if not os.path.exists(temp_path):
             os.makedirs(temp_path)
