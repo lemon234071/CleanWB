@@ -202,12 +202,12 @@ def main_filter(simple_filter: Filter, loader, path, out_dir, dirty_dir, resp_on
 
     for key, value in dirty_data.items():
         if len(value) > 0:
-            dirty_dialog_path = dirty_dir + 'other/%s_%s.json' % (key, fid)
+            dirty_dialog_path = os.path.join(dirty_dir, 'other/%s_%s.json' % (key, fid))
             save_json(value, dirty_dialog_path)
 
-    save_json(black, dirty_dir + 'black/black_%s.json' % fid)
-    save_json(name_dict, dirty_dir + 'name/name_%s.json' % fid)
-    save_json(not_en_dict, dirty_dir + 'not_en/not_en_%s.json' % fid)
-    save_json(generic_dict, dirty_dir + 'generic/generic_%s.json' % fid)
-    save_json(confuse_dict, dirty_dir + 'confuse/confuse_%s.json' % fid)
+    save_json(black, os.path.join(dirty_dir, 'black/black_%s.json' % fid))
+    save_json(name_dict, os.path.join(dirty_dir, 'name/name_%s.json' % fid))
+    save_json(not_en_dict, os.path.join(dirty_dir, 'not_en/not_en_%s.json' % fid))
+    save_json(generic_dict, os.path.join(dirty_dir, 'generic/generic_%s.json' % fid))
+    save_json(confuse_dict, os.path.join(dirty_dir, 'confuse/confuse_%s.json' % fid))
     print(fid, "over")
