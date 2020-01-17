@@ -200,6 +200,10 @@ def main_filter(simple_filter: Filter, loader, path, out_dir, dirty_dir, resp_on
     if len(output_single) > 0:
         save_json(output_single, out_path.replace("multi", "single"))
 
+    for file in []:
+        temp_path = os.path.join(dirty_dir, file)
+        if not os.path.exists(temp_path):
+            os.makedirs(temp_path)
     for key, value in dirty_data.items():
         if len(value) > 0:
             dirty_dialog_path = os.path.join(dirty_dir, 'other/%s_%s.json' % (key, fid))
