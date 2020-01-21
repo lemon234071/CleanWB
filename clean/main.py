@@ -38,6 +38,9 @@ def main_filter(simple_filter: Filter, loader, path, out_dir, dirty_dir, resp_on
                 if resp_only:
                     if i < 1:
                         continue
+                #### de {\\1c&H4080FF&}
+                if "{\\1c&H4080FF&}" in dialog[i]:
+                    dialog[i] = dialog[i].replace("{\\1c&H4080FF&}", "")
                 #### de @
                 if "回复 @" in dialog[i] and ":" in dialog[i]:
                     dialog[i] = dialog[i][dialog[i].index(":")+2:]
@@ -107,6 +110,8 @@ def main_filter(simple_filter: Filter, loader, path, out_dir, dirty_dir, resp_on
         else:
             start = 0
             for i in range(len(dialog)):
+                if "{\\1c&H4080FF&}" in dialog[i]:
+                    dialog[i] = dialog[i].replace("{\\1c&H4080FF&}", "")
                 ###### de @
                 if "回复 @" in dialog[i] and ":" in dialog[i]:
                     dialog[i] = dialog[i][dialog[i].index(":")+2:]
