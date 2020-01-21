@@ -22,8 +22,8 @@ def main():
     simple_filter = Filter(person_name_set=person_name_set, black_str_set=black_str_set,
                            black_list_set=black_list_set, confuse_set=confuse_set, is_en=is_en)
     # print("bug tested")
-    loader, path = simple_loader[0]
-    main_filter(simple_filter, loader, path, args.out_dir, args.dirty_dir, False)
+    #loader, path = simple_loader[0]
+    #main_filter(simple_filter, loader, path, args.out_dir, args.dirty_dir, False)
     p = Pool(40)
     for loader, path in tqdm(simple_loader):
         p.apply_async(main_filter, args=(simple_filter, loader, path, args.out_dir, args.dirty_dir, False))
