@@ -2,7 +2,7 @@ import os
 import jieba
 
 from utils import *
-from clean.filter import BLACK_LIST, BLACK_STR
+from clean.filter import BLACK_LIST, BLACK_STR, SAFE_LIST
 
 
 def dataloader(dir_path):
@@ -93,16 +93,16 @@ def get_filter_set(tool_path):
     black_list.update(BLACK_LIST)
     black_list.update(bad)
 
-    # safe_name = load_txt("/home/wangyida/data_wash/data/v3/tools_data/dirty/name_keys.txt")
-    # good = load_txt("/home/wangyida/data_wash/data/v3/tools_data/good.txt")
-    # safe_words = load_txt("/home/wangyida/data_wash/data/v3/tools_data/dirty/black_keys.txt")
-    # for word in set(safe_name + good + safe_words + SAFE_LIST +
-    #                 ["的", "重庆", "四川", "海南", "然后", "电影", "系", "爷爷", "娘", "工资", "支持", "机会", "女人", "实现",
-    #         "能力", "机场", "身高", "体重", "滚", "渣男", "绿茶", "视奸", "隔壁老王", "me too" ,
-    #                  "日", "色", "本", "干", "哥哥", "消息", "皮肤", "医院", "网络"]): # "鸡"
-    #     black_str.discard(word)
-    #     black_list.discard(word)
-    #     person_name.discard(word)
+    safe_name = load_txt(os.path.join(tool_path, "name_keys.txt"))
+    good = load_txt(os.path.join(tool_path, "good.txt"))
+    safe_words = load_txt(os.path.join(tool_path, "black_keys.txt"))
+    for word in set(safe_name + good + safe_words + SAFE_LIST +
+                    ["的", "重庆", "四川", "海南", "然后", "电影", "系", "爷爷", "娘", "工资", "支持", "机会", "女人", "实现",
+            "能力", "机场", "身高", "体重", "滚", "渣男", "绿茶", "视奸", "隔壁老王", "me too" ,
+                     "日", "色", "本", "干", "哥哥", "消息", "皮肤", "医院", "网络"]): # "鸡"
+        black_str.discard(word)
+        black_list.discard(word)
+        person_name.discard(word)
     safe_str = ["烂", "性", "娘", "妈", "日", "鸡", "粉"]
     for word in safe_str:
         black_str.discard(word)

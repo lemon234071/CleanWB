@@ -4,7 +4,7 @@ import json
 
 
 data = []
-for path in ["./" + name for name in os.listdir("./data/dirty/black/")]:
+for path in ["./data/dirty/black/" + name for name in os.listdir("./data/dirty/black/")]:
     with open(path, "r", encoding="utf-8") as f:
         one = json.load(f)
         data.append(one)
