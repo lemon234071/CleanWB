@@ -26,7 +26,11 @@ def main():
 
     logger.info("Preparing")
     dirty_dir = os.path.join(args.data_dir, "drity_data")
+    if not os.path.isdir(dirty_dir):
+        os.mkdir(dirty_dir)
     after_dist_dir = os.path.join(args.data_dir, "after_dist")
+    if not os.path.isdir(after_dist_dir):
+        os.mkdir(after_dist_dir)
 
     simple_loader = dataloader(args.raw_dir)
     person_name_set, black_str_set, black_list_set, is_en, confuse_set = get_filter_set(args.tool_dir)
