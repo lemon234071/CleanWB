@@ -7,6 +7,7 @@ from argparse import ArgumentParser
 from clean.rules import main_filter, data_merge, de_ad, bert_clean, de_generic
 from clean.filter import Filter
 from clean.dataset import dataloader, get_filter_set
+from clean.for_classifier import single_context, single_clean, multi_context, multi_clen
 from utils import *
 
 logger = logging.getLogger(__file__)
@@ -42,23 +43,40 @@ def main():
     # main_filter(simple_filter, loader, path, after_dist_dir, args.dirty_dir, False)
     logger.info("Rules start")
     p = Pool(args.n_p)
-    for loader, path in tqdm(simple_loader):
+    for loader, path in simple_loader:
         p.apply_async(main_filter, args=(simple_filter, loader, path, after_dist_dir, dirty_dir, False, True))
     p.close()
     p.join()
 
     logger.info("Stage 2 start")
     data = data_merge(after_dist_dir)
+    print(len(data), "len all after rules")
+    print(len([x for x in data if len(x) < 3]), "len single after rules")
+    print(len([x for x in data if len(x) > 2]), "len multi after rules")
     data = bert_clean(data,
                       os.path.join(args.tool_dir, "wangyida_vocab.txt"),
                       os.path.join(args.tool_dir, "safe_inbert.txt"),
                       dirty_dir)
     data = de_ad(data, os.path.join(dirty_dir, "ad.json"))
     if args.n_degeneric:
-        data = de_generic(data, dirty_dir, os.path.join(args.tool_dir, "tri_grams.json"), args.n_degeneric)
+        data = de_generic(data, dirty_dir, os.path.join(dirty_dir, "tool_tri_grams.json"), args.n_degeneric)
 
     save_json(data, os.path.join(args.data_dir, "after_rules.json"))
+
     logger.info("Classifier start")
+    print(len(data), "len all")
+    single = [dialog for dialog in data if len(dialog) < 3]
+    multi = [dialog for dialog in data if len(dialog) > 2]
+    print(len(single), "len single")
+    print(len(multi), "len multi")
+
+    cls_dir = os.path.join(args.data_dir, "cls")
+    if not os.path.isdir(cls_dir):
+        os.mkdir(cls_dir)
+    single_clean(single, os.path.join(cls_dir, "single_clean.txt"))
+    single_context(single,  os.path.join(cls_dir, "single_context.txt"))
+    multi_clen(multi,  os.path.join(cls_dir, "multi_clean.txt"))
+    multi_context(multi,  os.path.join(cls_dir, "multi_context.txt"))
 
 
 if __name__ == "__main__":

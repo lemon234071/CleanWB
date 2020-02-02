@@ -18,6 +18,7 @@ def de_generic(path, cnt_path, tri_path, outpath, n):
             for i in range(len(resp) - n + 1):
                 ngram.append(''.join(resp[i: i + n]))
         return ngram
+
     if os.path.exists(tri_path):
         generic = load_json(tri_path)
         print("load from :", tri_path)
@@ -46,7 +47,7 @@ def de_generic(path, cnt_path, tri_path, outpath, n):
         flag = False
         cnt = collections.Counter(tri_grams)
         for word, num in cnt.items():
-            if 1 > tri_grams.count(num)*3/len(resp) > 0.9:
+            if 1 > tri_grams.count(num) * 3 / len(resp) > 0.9:
                 if word in generic:
                     dirty_cnt.append(resp)
                     flag = True
@@ -134,7 +135,7 @@ def pro_CWB_json(path, outpath, maxlen, train_split=True):
     print(new_multi[0])
     print(len(new_single) + len(new_multi))
     if not train_split:
-        data_out = {"train": new_single+new_multi}
+        data_out = {"train": new_single + new_multi}
         random.shuffle(data_out["train"])
         save_json(data_out, outpath)
     else:
@@ -373,25 +374,43 @@ def clean_data(path, vocab_path, safe_path, outpath, dirty_dir):
     save_json(list(dirty), dirty_dir + "bert_dirty.json")
     save_json(white_single, dirty_dir + "single_white.json")
     save_json(white_multi, dirty_dir + "multi_white.json")
-    save_json(new_multi+new_single, outpath)
+    save_json(new_multi + new_single, outpath)
+
+
+def de_valid_test():
+    test = load_json("./data/CleanWB_test.json")["test"]
+    data = load_json("./data/LCCD.json")
+    valid = load_json("./data/CleanWB.json")["valid"]
+
+    train = ["\t".join(dialog) for dialog in data["train"]]
+    del data
+    print(len(train))
+    not_train = set(["\t".join(dialog) for dialog in valid] + ["\t".join(dialog) for dialog in test])
+    for dialog in train[::-1]:
+        if dialog in not_train:
+            train.remove(dialog)
+    print(len(train))
+
+    train = [x.split("\t") for x in train]
+    print(train[:5])
+    print("        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  ")
+    print(valid[:5])
+    new_data = {"train": train, "valid": valid}
+    save_json(new_data, "./data/LCCD.json")
 
 
 def main():
-    clean_data("/home/wangyida/git/temp/CleanWB/data/after_cls.json",
-               "/home/wangyida/data/LCCD/tools_data/wangyi_vocab.txt",
-               "/home/wangyida/data/LCCD/tools_data/safe_inbert.txt",
-               "/home/wangyida/data/LCCD/LCCD.json",
-               "/home/wangyida/data/LCCD/bert_dirty/")
-    de_generic("/home/wangyida/data/LCCD/LCCD.json",
-               "/home/wangyida/data/LCCD/tools_data/cnt.json",
-               "/home/wangyida/data/LCCD/tools_data/tri_grams.json",
-               "./data/LLCD_degeneric.json", 1000)
-    pro_CWB_json("./data/LLCD_degeneric.json", "./data/LLCD.json", 320, train_split=False)
-
-    # data = load_json("./data/LLCD.json")
-    # valid = load_json("./data/CleanWB.json")["valid"]
-    # data["valid"] = valid
-    # save_json(data, "./data/LLCD.json")
+    # clean_data("/home/wangyida/git/temp/CleanWB/data/after_cls.json",
+    #            "/home/wangyida/data/LCCD/tools_data/wangyi_vocab.txt",
+    #            "/home/wangyida/data/LCCD/tools_data/safe_inbert.txt",
+    #            "/home/wangyida/data/LCCD/LCCD.json",
+    #            "/home/wangyida/data/LCCD/bert_dirty/")
+    # de_generic("/home/wangyida/data/LCCD/LCCD.json",
+    #            "/home/wangyida/data/LCCD/tools_data/cnt.json",
+    #            "/home/wangyida/data/LCCD/tools_data/tri_grams.json",
+    #            "./data/LLCD_degeneric.json", 1000)
+    pro_CWB_json("./data/LLCD.json", "./data/LLCD.json", 320, train_split=False)
+    de_valid_test()
     print("over")
 
 

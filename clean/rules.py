@@ -13,7 +13,8 @@ def main_filter(simple_filter: Filter, loader, path, out_dir, dirty_dir, resp_on
     print("resp_only:", resp_only)
     print("cut :", cut)
     fid = path[path.rindex("/") + 1:path.rindex(".")]
-    out_path = out_dir + fid + "_multi.json"
+    out_path = os.path.join(out_dir, fid + "_multi.json")
+    print(out_path)
     if not os.path.exists(out_path[:out_path.rindex("/")]):
         print(out_path[:out_path.rindex("/")], "not exist!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         return
@@ -239,7 +240,7 @@ def main_filter(simple_filter: Filter, loader, path, out_dir, dirty_dir, resp_on
 
 
 def data_merge(dir, save_path=None):
-    pathes = [dir + name for name in os.listdir(dir)]
+    pathes = [os.path.join(dir, name) for name in os.listdir(dir)]
     data = []
     for path in pathes:
         if "json" in path:
@@ -424,7 +425,8 @@ def bert_clean(data, vocab_path, safe_path, dirty_dir, save_path=None):
     print(n_single, "multi:", n_multi)
     print(len(new_multi), "multi len")
     print(len(new_single), "single len")
-    bert_dirty_dir = os.path.join(dirty_dir, "/bert_dirty/")
+    bert_dirty_dir = os.path.join(dirty_dir, "bert_dirty")
+    print(bert_dirty_dir)
     if not os.path.isdir(bert_dirty_dir):
         os.mkdir(bert_dirty_dir)
     save_json(white_multi_dialog, os.path.join(bert_dirty_dir, "multi_dirty_dialog.json"))

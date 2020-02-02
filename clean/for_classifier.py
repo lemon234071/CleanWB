@@ -4,6 +4,7 @@ import random
 from tqdm import tqdm
 import pandas as pd
 import collections
+from argparse import ArgumentParser
 
 from utils import *
 
@@ -11,7 +12,7 @@ random.seed(2019)
 
 
 def single_clean(data, outpath):
-    #data = load_json(path)
+    # data = load_json(path)
     new_data = []
     for dialog in tqdm(data, mininterval=2):
         line = ["0\t", " ; ".join(dialog), "\n"]
@@ -37,8 +38,8 @@ def post_single(data, dir_temp, out_path):
     # context_label_path = dir + "more_single_contextfor_context_labels.json"
     # context_bad_label_path = dir + "more_single_contextfor_context_bad.json"
 
-    clean_label_path = dir_temp + "single_clean_clean_0.5.json"
-    context_label_path = dir_temp + "single_context_context_labels.json"
+    clean_label_path = os.path.join(dir_temp, "single_clean_clean_0.5.json")
+    context_label_path = os.path.join(dir_temp, "single_context_context_labels.json")
     clean_label = load_json(clean_label_path)
     # clean_label_bad = load_json(clean_label_bad_path)
     context_label = load_json(context_label_path)
@@ -79,7 +80,7 @@ def multi_clen(data, outpath):
     label = 0
     # data = load_json(path)
     for j, dialog in enumerate(tqdm(data, mininterval=2)):
-        for i in range(len(dialog)-1):
+        for i in range(len(dialog) - 1):
             line = [str(label), "\t", dialog[i], " ; ", dialog[i + 1], "\n"]
             new_data.extend(line)
         label = 1 - label
@@ -89,11 +90,11 @@ def multi_clen(data, outpath):
 
 
 def multi_context(data, outpath):
-    #data = load_json(path)
+    # data = load_json(path)
     new_data = []
     k = 0
     for dialog in tqdm(data, mininterval=2):
-        for i in range(len(dialog)-1):
+        for i in range(len(dialog) - 1):
             line = [str(k), "\t", dialog[i], "\n"]
             new_data.extend(line)
         k = 1 - k
@@ -103,9 +104,87 @@ def multi_context(data, outpath):
 
 
 def post_multi(data, dir_temp, out_path):
-    clean_label_path = dir_temp + "multi_clean_clean_labels.json"
+    clean_label_path = os.path.join(dir_temp, "multi_clean_clean_0.5.json")
+    context_label_path = os.path.join(dir_temp, "multi_context_context_labels.json")
+    clean_label = load_json(clean_label_path)
+    context_label = load_json(context_label_path)
+
+    multi_clean = load_txt(os.path.join(dir_temp, "multi_clean.txt"))
+
+    assert len(clean_label) == len(multi_clean) == len(context_label)
+    labels = collections.defaultdict(list)
+    new_clean_label = []
+    new_context_label = []
+    last_label = 0
+    for i in range(len(multi_clean)):
+        label = int(multi_clean[i].strip().split("\t")[0])
+        if label != last_label:
+            labels["clean"].append(new_clean_label)
+            labels["context"].append(new_context_label)
+            new_clean_label = []
+            new_context_label = []
+        new_clean_label.append(clean_label[i])
+        new_context_label.append(context_label[i])
+        last_label = label
+    labels["clean"].append(new_clean_label)
+    labels["context"].append(new_context_label)
+
+    assert len(data) == len(labels["clean"]) == len(labels["context"])
+    # data = load_json(data_path)
+
+    new_data = []
+    data_dirty = []
+    data_dirty_labels = collections.defaultdict(list)
+    for i, dialog in enumerate(data):
+        if (not labels["context"][i][0]):  # and labels["clean"][i][-1]:
+            cnt = len(labels["clean"][i])
+            good = 0
+            for j in range(len(labels["clean"][i])):
+                if labels["clean"][i][j]:
+                    good += 1
+            if good/cnt >= 0.5:
+                new_data.append(dialog)
+        else:
+            data_dirty.append(dialog)
+            data_dirty_labels["clean"].append(labels["clean"][i])
+            data_dirty_labels["context"].append(labels["context"][i])
+
+    assert len(data_dirty) == len(data_dirty_labels["clean"]) == len(data_dirty_labels["context"])
+    for i, dialog in enumerate(data_dirty):
+        assert len(dialog) - 1 == len(data_dirty_labels["context"][i]) == len(data_dirty_labels["clean"][i])
+        start = 0
+        while data_dirty_labels["context"][i][start] or (not data_dirty_labels["clean"][i][start]):  # context label 0 is good
+            start += 1
+            if start > len(dialog) - 2:
+                break
+        j = start
+        while j < len(dialog) - 1:
+            if data_dirty_labels["clean"][i][j]:
+                j += 1
+            else:
+                if len(dialog[start:j + 1]) > 1:
+                    new_data.append(dialog[start:j + 1])
+                start = j + 1
+                if start > len(dialog) - 2:
+                    break
+                while data_dirty_labels["context"][i][start] or (not data_dirty_labels["clean"][i][start]):  # context label 0 is good
+                    start += 1
+                    if start > len(dialog) - 2:
+                        break
+                j = start
+
+        if len(dialog[start:j + 1]) > 1:
+            new_data.append(dialog[start:j + 1])
+
+    print(len(new_data), "all")
+    print(len([x for x in new_data if len(x) > 2]), "multi")
+    save_json(new_data, out_path)
+
+
+def post_multi_v3(data, dir_temp, out_path):
+    clean_label_path = os.path.join(dir_temp, "multi_clean_clean_labels.json")
     # clean_label_bad_path = dir + "multi_clean_clsfor_clean_filter0.json"
-    context_label_path = dir_temp + "multi_context_context_labels.json"
+    context_label_path = os.path.join(dir_temp, "multi_context_context_labels.json")
     # context_bad_label_path = dir + "multi_context_clsfor_context_bad.json"
     clean_label = load_json(clean_label_path)
     # clean_label_bad = load_json(clean_label_bad_path)
@@ -115,7 +194,7 @@ def post_multi(data, dir_temp, out_path):
     # for x in context_bad_label_raw:
     #     context_bad_label.extend(x)
 
-    multi_clean = load_txt(dir_temp + "multi_clean.txt")
+    multi_clean = load_txt(os.path.join(dir_temp, "multi_clean.txt"))
     # dialog_index = load_json(dir_temp + "dialog_index.json")
     assert len(clean_label) == len(multi_clean) == len(context_label)
     labels = collections.defaultdict(list)
@@ -143,17 +222,17 @@ def post_multi(data, dir_temp, out_path):
         start = 0
         while labels["context"][i][start] or not labels["clean"][i][start]:  # context label 0 is good
             start += 1
-            if start > len(dialog)-2:
+            if start > len(dialog) - 2:
                 break
         j = start
-        while j < len(dialog)-1:
+        while j < len(dialog) - 1:
             if labels["clean"][i][j]:
                 j += 1
             else:
-                if len(dialog[start:j+1]) > 1:
-                    new_data.append(dialog[start:j+1])
+                if len(dialog[start:j + 1]) > 1:
+                    new_data.append(dialog[start:j + 1])
                 start = j + 1
-                if start > len(dialog)-2:
+                if start > len(dialog) - 2:
                     break
                 while labels["context"][i][start] or not labels["clean"][i][start]:  # context label 0 is good
                     start += 1
@@ -161,8 +240,8 @@ def post_multi(data, dir_temp, out_path):
                         break
                 j = start
 
-        if len(dialog[start:j+1]) > 1:
-            new_data.append(dialog[start:j+1])
+        if len(dialog[start:j + 1]) > 1:
+            new_data.append(dialog[start:j + 1])
         # print(labels["context"][i], labels["clean"][i])
         # print(new_data)
         # import pdb
@@ -172,7 +251,7 @@ def post_multi(data, dir_temp, out_path):
     save_json(new_data, out_path)
 
 
-def post_cls_multi_before(data_path, dir_temp, out_path):
+def post_multi_v1(data_path, dir_temp, out_path):
     clean_label_path = dir_temp + "multi_cleanfor_clean_labels.json"
     # clean_label_bad_path = dir + "multi_clean_clsfor_clean_filter0.json"
     context_label_path = dir_temp + "multi_contextfor_context_labels.json"
@@ -285,15 +364,6 @@ def post_clean_multi(data_path, dir_temp):
     save_json(new_data, dir_temp + "multi_after_clean_data.json")
 
 
-# def post_cls_multi(data_path, label_path, out_path):
-#     data = load_json(data_path)
-#     labels = load_json(label_path)
-#     new_data = []
-#     for dialog in data:
-#
-#     save_json(new_data, out_path)
-
-
 def merge_more():
     single_path = "/home/wangyida/data_wash/data/v2/cls/labels/good.json"
     multi_path = "/home/wangyida/data_wash/data/v2/cls/labels/multi_good.json"
@@ -335,42 +405,61 @@ def merge_more():
     save_json(multi_out, "/home/wangyida/data_wash/data/v2/multi_after_cls.json")
 
 
+# def for_more_multi_process(out_path):
+#     single1 = load_json()
+#     single2 = load_json()
+#     multi1 = load_json()
+#     multi2 = load_json()
+#     multi3 = load_json()
+#     single = single1 + single2
+#     multi = multi1 + multi2 + multi3
+#     data = single + multi
+#     save_json(data, out_path)
+
+
 def main():
-    # data = load_json("/home/wangyida/git/temp/CleanWB/data/after_rules.json")
+    parser = ArgumentParser()
+    parser.add_argument("--data_dir", type=str, default="./data/", help="Main data dir.")
+    args = parser.parse_args()
+
+    # data = load_json(os.path.join(args.data_dir, "after_rules.json"))
     # print(len(data), "len all")
     # single = [dialog for dialog in data if len(dialog) < 3]
     # multi = [dialog for dialog in data if len(dialog) > 2]
     # print(len(single), "len single")
     # print(len(multi), "len multi")
-    # #
-    # # single_clean(single, "../data/cls/single_clean.txt")
-    # # single_context(single, "../data/cls/single_context.txt")
-    # # multi_clen(multi, "../data/cls/multi_clean.txt")
-    # # multi_context(multi, "../data/cls/multi_context.txt")
-    # post_single(single,
-    #             "/home/wangyida/git/temp/CleanWB/data/cls/",
-    #             "/home/wangyida/git/temp/CleanWB/data/single_cls.json")
-    # post_multi(multi,
-    #            "/home/wangyida/git/temp/CleanWB/data/cls/",
-    #            "/home/wangyida/git/temp/CleanWB/data/multi_cls.json")
-
-    single = load_json("/home/wangyida/211/v3/after_rules/single_after_rules.json")
-    # single_clean(single, "../data/cls_WB/single_clean.txt")
-    # single_context(single, "../data/cls_WB/single_context.txt")
-    print(len(single), "len single")
-    post_single(single,
-                "../data/cls_WB/",
-                "/home/wangyida/git/temp/CleanWB/data/single_cls_WB.json")
-
-    # multi = load_json("/home/wangyida/211/v3/after_rules/multi_after_rules.json")
     #
-    # # multi_clen(multi, "../data/cls_WB/multi_clean.txt")
-    # # multi_context(multi, "../data/cls_WB/multi_context.txt")
-    # print(len(multi), "len multi")
-    # post_multi(multi,
-    #            "../data/cls_WB/",
-    #            "/home/wangyida/git/temp/CleanWB/data/multi_cls_WB.json")
+    # cls_dir = os.path.join(args.data_dir, "cls")
+    # if not os.path.isdir(cls_dir):
+    #     os.mkdir(cls_dir)
+    # # single_clean(single, os.path.join(cls_dir, "single_clean.txt"))
+    # # single_context(single,  os.path.join(cls_dir, "single_context.txt"))
+    # # multi_clen(multi,  os.path.join(cls_dir, "multi_clean.txt"))
+    # # multi_context(multi,  os.path.join(cls_dir, "multi_context.txt"))
+    #
+    # # post_single(single, cls_dir, os.path.join(args.data_dir, "single_cls.json"))
+    # post_multi(multi, cls_dir, os.path.join(args.data_dir, "multi_cls.json"))
+    #################################################################################
 
+    # data = load_json(os.path.join(args.data_dir, "after_rules.json"))
+    # print(len(data), "len all")
+    # single = [dialog for dialog in data if len(dialog) < 3]
+    # multi = [dialog for dialog in data if len(dialog) > 2]
+    # single = load_json(os.path.join(args.data_dir, "single_after_rules.json"))
+    multi = load_json(os.path.join(args.data_dir, "multi_after_rules.json"))
+    # print(len(single), "len single")
+    print(len(multi), "len multi")
+
+    cls_dir = os.path.join(args.data_dir, "cls")
+    # if not os.path.isdir(cls_dir):
+    #     os.mkdir(cls_dir)
+    # single_clean(single, os.path.join(cls_dir, "single_clean.txt"))
+    # single_context(single,  os.path.join(cls_dir, "single_context.txt"))
+    # multi_clen(multi,  os.path.join(cls_dir, "multi_clean.txt"))
+    # multi_context(multi,  os.path.join(cls_dir, "multi_context.txt"))
+
+    # post_single(single, cls_dir, os.path.join(args.data_dir, "single_cls.json"))
+    post_multi(multi, cls_dir, os.path.join(args.data_dir, "multi_cls.json"))
     print(1)
 
 
