@@ -91,56 +91,65 @@ def long_filter(path, outpath, multi=False):
     save_json(data_list, outpath)
 
 
-def sta_final(path, outpath):
-    data = load_json(path)
-
+def sta_final(data, outpath):
+    #data = load_json(path)
     cnt_seq_len = collections.Counter()
+    cnt_chars_perseq = collections.Counter()
+    cnt_words_dialog = collections.Counter()
     cnt_turns = collections.Counter()
-    cnt_dialog_len = collections.Counter()
-
-    long_seq = []
-    longlong_list = []
-    dupl = []
-    num_seq = 0
-    num_words = 0
-    turn_len_list = []
-    num_davg_len = 0
     vocab_dict = collections.Counter()
+
+    all_num_char = 0
+    num_max_chars = 0
+    num_words = 0
+    num_seq = 0
+    num_davg_len = 0
     max_turns = 0
     max_seq = 0
+
+    turn_len_list = []
+    dupl = []
+
+    long_turn_threshold = 30
     long_turns = []
+    long_seq_threshold = 140
+    long_seq = []
+    words_dialog_threshold = 320
+    longlong_list = []
 
     for dialog in tqdm(data):
         num_turns = len(dialog)
         max_turns = max(num_turns, max_turns)
         num_seq += num_turns
         turn_len_list.append(num_turns)
-        cnt_turns.update([num_turns])
-
-        words_dialog = 0
-        if num_turns > 50:
+        if num_turns > long_turn_threshold:
             long_turns.append(dialog)
 
         flag = False
+        words_dialog = 0
         dupl_set = set()
         for seq in dialog:
             dupl_set.add(seq)
+            num_chars = len(seq.strip().replace(" ", ""))
+            num_max_chars = max(num_max_chars, num_chars)
+            all_num_char += num_chars
+            cnt_chars_perseq.update([num_chars])
+
             word_list = seq.strip().split()
             num_seq_len = len(word_list)
             max_seq = max(max_seq, num_seq_len)
-            vocab_dict.update(word_list)
             words_dialog += num_seq_len
+            vocab_dict.update(word_list)
 
             num_words += num_seq_len
             cnt_seq_len.update([num_seq_len])
-            if num_seq_len > 128:
+            if num_seq_len > long_seq_threshold:
                 long_seq.append(seq)
                 #     flag = True
                 #     break
-
+        cnt_words_dialog.update([words_dialog])
         num_davg_len += words_dialog / num_turns
-        cnt_dialog_len.update([words_dialog])
-        if words_dialog > 256:
+        if words_dialog > words_dialog_threshold:
             longlong_list.append(dialog)
         #     continue
         # if flag:
@@ -154,20 +163,22 @@ def sta_final(path, outpath):
         #     dupl.append(dialog)
         #     continue
 
+    print("all chars", all_num_char)
     print("number dialog", len(data))
-    print("number seq ", num_seq)
-    print("avg dialog number", num_seq / len(data))
-    print("avg words per seq number", num_words / num_seq)
-    print("avg words per seq number2", num_davg_len / len(data))
+    print("number seq", num_seq)
+    print("avg seq per dialog", num_seq / len(data))
+    print("avg words per seq", num_words / num_seq)
+    print("avg words per seq2", num_davg_len / len(data))
     print("max turns ", max_turns)
     print("max seq", max_seq)
 
+    cnt_turns.update(turn_len_list)
     turn_len_list.sort()
     if len(turn_len_list) % 1 == 1:
         num_media = turn_len_list[int((len(turn_len_list) - 1) / 2)]
     else:
         num_media = turn_len_list[int((len(turn_len_list) / 2 + len(turn_len_list) / 2 - 1) / 2)]
-    print("median len turn ", num_media)
+    print("median of number of turns ", num_media)
 
     save_json(long_turns, outpath + 'long_turns.json')
     save_json(long_seq, outpath + 'long_seq.json')
@@ -178,18 +189,23 @@ def sta_final(path, outpath):
     save_json(vocab_dict, outpath + 'vocab.json')
     cnt_seq_len = sorted(cnt_seq_len.items(), key=lambda x: int(x[0]), reverse=False)
     save_json(cnt_seq_len, outpath + 'seq_len.json')
+    cnt_chars_perseq = sorted(cnt_chars_perseq.items(), key=lambda x: int(x[0]), reverse=False)
+    save_json(cnt_chars_perseq, outpath + 'seq_len_char.json')
     cnt_turns = sorted(cnt_turns.items(), key=lambda x: int(x[0]), reverse=False)
     save_json(cnt_turns, outpath + 'cnt_turns.json')
-    cnt_dialog_len = sorted(cnt_dialog_len.items(), key=lambda x: int(x[0]), reverse=False)
+    cnt_dialog_len = sorted(cnt_words_dialog.items(), key=lambda x: int(x[0]), reverse=False)
     save_json(cnt_dialog_len, outpath + 'dialog_words.json')
 
 
 def main():
     # sta_black_keys()
-    sta_final("/home/wangyida/211/v3/data/CleanWB/single_final_v1.json",
-              "/home/wangyida/211/v3/data/CleanWB/sta_single/")
-    sta_final("/home/wangyida/211/v3/data/CleanWB/multi_final_v1.json",
-              "/home/wangyida/211/v3/data/CleanWB/sta_multi/")
+    # sta_final("/home/wangyida/211/v3/data/CleanWB/single_final_v1.json",
+    #           "/home/wangyida/211/v3/data/CleanWB/sta_single/")
+    # sta_final("/home/wangyida/211/v3/data/CleanWB/multi_final_v1.json",
+    #           "/home/wangyida/211/v3/data/CleanWB/sta_multi/")
+    data = load_json("/home/wangyida/data/LCCD/LCCD.json")
+    data = [x for x in data if len(x) > 2]
+    sta_final(data, "/home/wangyida/data/LCCD/sta_multi/")
     print(1)
 
 

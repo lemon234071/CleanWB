@@ -33,7 +33,7 @@ def main():
     if not os.path.isdir(after_dist_dir):
         os.mkdir(after_dist_dir)
 
-    simple_loader = dataloader(args.raw_dir)
+    simple_loader = dataloader(args.raw_dir, 100000)
     person_name_set, black_str_set, black_list_set, is_en, confuse_set = get_filter_set(args.tool_dir)
     simple_filter = Filter(person_name_set=person_name_set, black_str_set=black_str_set,
                            black_list_set=black_list_set, confuse_set=confuse_set, is_en=is_en)
@@ -43,8 +43,8 @@ def main():
     # main_filter(simple_filter, loader, path, after_dist_dir, args.dirty_dir, False)
     logger.info("Rules start")
     p = Pool(args.n_p)
-    for loader, path in simple_loader:
-        p.apply_async(main_filter, args=(simple_filter, loader, path, after_dist_dir, dirty_dir, False, True))
+    for fid, data in simple_loader:
+        p.apply_async(main_filter, args=(simple_filter, data, fid, after_dist_dir, dirty_dir, False, True))
     p.close()
     p.join()
 

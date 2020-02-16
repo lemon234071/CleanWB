@@ -9,10 +9,10 @@ from utils import *
 from clean.filter import Filter
 
 
-def main_filter(simple_filter: Filter, loader, path, out_dir, dirty_dir, resp_only=False, cut=False):
+def main_filter(simple_filter: Filter, data, fid, out_dir, dirty_dir, resp_only=False, cut=False):
     print("resp_only:", resp_only)
     print("cut :", cut)
-    fid = path[path.rindex("/") + 1:path.rindex(".")]
+    # fid = path[path.rindex("/") + 1:path.rindex(".")]
     out_path = os.path.join(out_dir, fid + "_multi.json")
     print(out_path)
     if not os.path.exists(out_path[:out_path.rindex("/")]):
@@ -20,7 +20,7 @@ def main_filter(simple_filter: Filter, loader, path, out_dir, dirty_dir, resp_on
         return
 
     print("start:", fid)
-    data = loader(path)
+    # data = loader(path)
     print('length of data:', len(data))
     output_single = []
     output_multi = []

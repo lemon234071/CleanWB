@@ -5,11 +5,20 @@ from utils import *
 from clean.filter import BLACK_LIST, BLACK_STR, SAFE_LIST
 
 
-def dataloader(dir_path):
+def dataloader(dir_path, batch_size):
     json_path_list = [dir_path + name for name in os.listdir(dir_path)]
+    # simple_loader = []
+    # for path in json_path_list:
+    #     simple_loader.append((load_json, path))
     simple_loader = []
     for path in json_path_list:
-        simple_loader.append((load_json, path))
+        dataset = load_json(path)
+        for i in range(0, len(dataset), batch_size):
+            fid = path[path.rindex("/") + 1:path.rindex(".")] + str(i)
+            if i+batch_size >= len(dataset):
+                simple_loader.append((dataset[i:], fid))
+                break
+            simple_loader.append((dataset[i: i+batch_size], fid))
     return simple_loader
 
 

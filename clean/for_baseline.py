@@ -120,16 +120,17 @@ def help_preare_trans(dataset, len_dataset, i, new_dialog, select_list):
 
 
 def prepare_trans(path, out_path, name):
-    print(out_path+name)
-    train = load_txt(path+name+"train.txt")
-    dev = load_txt(path+name+"dev.txt")
-    test = load_txt(path+name+"test.txt")
+    print(out_path + name)
+    train = load_txt(path + name + "train.txt")
+    dev = load_txt(path + name + "dev.txt")
+    test = load_txt(path + name + "test.txt")
 
     def temp(data):
         data_list = data.split("\t")
         res = data_list[0].split("[SEP]")
         res.append(data_list[1])
         return res
+
     new_train = [temp(x) for x in train]
     new_dev = [temp(x) for x in dev]
     new_test = [temp(x) for x in test]
@@ -151,7 +152,7 @@ def prepare_trans(path, out_path, name):
 
 def prepare_trans_new(path, out_path):
     name = "single" if "single" in path else "multi"
-    print(out_path+name)
+    print(out_path + name)
     datasets = defaultdict(list)
     for type in ["train", "valid", "test"]:
         src = load_txt(path + "src-" + type + ".txt")
@@ -188,7 +189,7 @@ def fix_bug(path1, out_path):
             dataset = "test"
         else:
             dataset = "valid"
-        print(out_path + name + "src-%s.txt"%dataset)
+        print(out_path + name + "src-%s.txt" % dataset)
         data = load_txt(path)
         src = []
         tgt = []
@@ -199,8 +200,9 @@ def fix_bug(path1, out_path):
         assert len(src) == len(tgt)
         new_src = "".join(src)
         print(len(new_src))
-        save_txt(new_src, out_path + name + "src-%s.txt"%dataset)
-        save_txt("".join(tgt), out_path + name + "tgt-%s.txt"%dataset)
+        save_txt(new_src, out_path + name + "src-%s.txt" % dataset)
+        save_txt("".join(tgt), out_path + name + "tgt-%s.txt" % dataset)
+
 
 def fix_bug2():
     path = "/home/wangyida/data/char_level/onmt_multi/"
@@ -270,8 +272,8 @@ def pre_char_ubuntu():
                 #     if dupl_dict[seq_list[0]] in new_seq:
                 #         dupl_dict[seq_list[0]] = new_seq
                 #     else:
-                    # if len(new_seq) > len(dupl_dict[seq_list[0]]):
-                    #     dupl_dict[seq_list[0]] = new_seq
+                # if len(new_seq) > len(dupl_dict[seq_list[0]]):
+                #     dupl_dict[seq_list[0]] = new_seq
             dupl_list = []
             for k, v in dupl_dict.items():
                 v = dedupl(v)
@@ -295,47 +297,81 @@ def pre_char_ubuntu():
         out.to_csv("/home/wangyida/data/char_level/ubuntu/ubuntu_corpus_%s.csv" % name, index=False)
 
 
-def main():
-    # path = "/home/wangyida/data_wash/data/v2/single_final.json"
-    # outpath = "/home/wangyida/data_wash/data/v2/single_v1.json"
-    # train_test_split_single(path, outpath)
-    # path = "/home/wangyida/data_wash/data/v2/multi_final.json"
-    # outpath = "/home/wangyida/data_wash/data/v2/multi_v1.json"
-    # train_test_split_multi(path, outpath)
-    # path = "/home/wangyida/data_wash/data/v2/single_v1.json"
-    # outdir = "/home/wangyida/data/char_level/onmt_single/"
-    # pre_char_onmt(path, outdir)
-    # path = "/home/wangyida/data_wash/data/v2/multi_v1.json"
-    # outdir = "/home/wangyida/data/char_level/onmt_multi/"
-    # pre_char_onmt(path, outdir)
-    # pre_char_hred()
-    # path = "/home/wangyida/data_wash/data/v2/multi_v1.json"
-    # outpath = "/home/wangyida/data/char_level/trans"
-    # prepare_trans(path, outpath)
-    # path = "/home/wangyida/data_wash/data/v2/single_v1.json"
-    # prepare_trans(path, outpath)
-    # pre_char_hred()
-    #########################bug
-    # path = "/home/wangyida/data/char_level/onmt_multi/"
-    # outpath = "/home/wangyida/data/char_level/trans/"
-    # prepare_trans_new(path, outpath)
-    # path = "/home/wangyida/data/char_level/onmt_single/"
-    # prepare_trans_new(path, outpath)
-    # path = "/home/wangyida/data/char_level/trans/"
-    # outpath = "/home/wangyida/data/char_level/"
-    # fix_bug(path, outpath)
-    # fix_bug(path, outpath)
-    #pre_char_hred()
-    #fix_bug2()
-    # path = "/home/wangyida/data/char_level/onmt_multi/"
-    # outpath = "/home/wangyida/data/char_level/trans/"
-    # prepare_trans_new(path, outpath)
-    # pre_char_ubuntu()
+def save_onmt(data, name, outdir):
+    src = [x[0] for x in data]
+    tgt = [x[1] for x in data]
+    save_json("\n".join(src), outdir + name + "-src.json")
+    save_json("\n".join(tgt), outdir + name + "-tgt.json")
 
-    path = "/home/wangyida/data/char_level/gpt/"
-    outpath = "/home/wangyida/data/char_level/trans/"
-    prepare_trans(path, outpath, "multi_")
-    prepare_trans(path, outpath, "single_")
+
+def gen_by_seqlen(stc, wb, dirty):
+
+
+def for_rebuttal(indir, outdir):
+    stc = load_json(indir + "stc.json")
+    wb = load_json(indir + "wb.json")
+    dirty_wb = load_json(indir + "dirty.json")
+    random.random(stc)
+    random.random(wb)
+    random.random(dirty_wb)
+
+    test = stc[-5000:] + wb[-5000:]
+    valid = stc[-15000:-5000] + wb[-15000:-5000]
+    stc = stc[:-15000]
+    wb = wb[:-15000]
+
+    stc_train, wb_train, dirty_train = gen_by_seqlen(stc, wb, dirty_wb)
+
+    save_onmt(stc_train, "stc_train", outdir)
+    save_onmt(wb_train, "wb_train", outdir)
+    save_onmt(dirty_train, "dirty_train", outdir)
+    save_onmt(valid, "valid", outdir)
+    save_onmt(test, "test", outdir)
+
+
+def main():
+
+
+# path = "/home/wangyida/data_wash/data/v2/single_final.json"
+# outpath = "/home/wangyida/data_wash/data/v2/single_v1.json"
+# train_test_split_single(path, outpath)
+# path = "/home/wangyida/data_wash/data/v2/multi_final.json"
+# outpath = "/home/wangyida/data_wash/data/v2/multi_v1.json"
+# train_test_split_multi(path, outpath)
+# path = "/home/wangyida/data_wash/data/v2/single_v1.json"
+# outdir = "/home/wangyida/data/char_level/onmt_single/"
+# pre_char_onmt(path, outdir)
+# path = "/home/wangyida/data_wash/data/v2/multi_v1.json"
+# outdir = "/home/wangyida/data/char_level/onmt_multi/"
+# pre_char_onmt(path, outdir)
+# pre_char_hred()
+# path = "/home/wangyida/data_wash/data/v2/multi_v1.json"
+# outpath = "/home/wangyida/data/char_level/trans"
+# prepare_trans(path, outpath)
+# path = "/home/wangyida/data_wash/data/v2/single_v1.json"
+# prepare_trans(path, outpath)
+# pre_char_hred()
+#########################bug
+# path = "/home/wangyida/data/char_level/onmt_multi/"
+# outpath = "/home/wangyida/data/char_level/trans/"
+# prepare_trans_new(path, outpath)
+# path = "/home/wangyida/data/char_level/onmt_single/"
+# prepare_trans_new(path, outpath)
+# path = "/home/wangyida/data/char_level/trans/"
+# outpath = "/home/wangyida/data/char_level/"
+# fix_bug(path, outpath)
+# fix_bug(path, outpath)
+# pre_char_hred()
+# fix_bug2()
+# path = "/home/wangyida/data/char_level/onmt_multi/"
+# outpath = "/home/wangyida/data/char_level/trans/"
+# prepare_trans_new(path, outpath)
+# pre_char_ubuntu()
+
+# path = "/home/wangyida/data/char_level/gpt/"
+# outpath = "/home/wangyida/data/char_level/trans/"
+# prepare_trans(path, outpath, "multi_")
+# prepare_trans(path, outpath, "single_")
 
 
 if __name__ == '__main__':
